@@ -33,8 +33,54 @@ def run_job(dry_run: bool):
     except Exception as e:
         logger.error(f"Scheduled job execution failed: {e}", exc_info=True)
 
+import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    """Lightweight HTTP Handler for Render Free Web Service health checks and manual triggers."""
+    dry_run_mode = False
+
+    def do_GET(self):
+        if self.path == "/trigger":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status": "triggered", "message": "Executing immediate blog automation run..."}')
+            threading.Thread(target=run_job, args=(HealthCheckHandler.dry_run_mode,), daemon=True).start()
+        else:
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status": "ok", "service": "daily-blog-automation"}')
+
+    def log_message(self, format, *args):
+        pass
+
+def start_health_server(port: int):
+    """Start HTTP server for Render free web service health checks."""
+    try:
+        server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+        logger.info(f"Health check HTTP server listening on port {port}")
+        server.serve_forever()
+    except Exception as e:
+        logger.warning(f"Health check server error: {e}")
+
 def start_daily_scheduler(dry_run: bool, hour: int, minute: int):
-    """Start blocking APScheduler to trigger daily run at specified time."""
+    """Start APScheduler and optional health check web server for Render Free Web Service."""
+    HealthCheckHandler.dry_run_mode = dry_run
+
+    # If running on Render (PORT env set), start HTTP health server in background thread
+    port_env = os.getenv("PORT")
+    if port_env:
+        try:
+            port = int(port_env)
+            t = threading.Thread(target=start_health_server, args=(port,), daemon=True)
+            t.start()
+            logger.info(f"Started Render Free Web Service health server thread on port {port}.")
+        except ValueError:
+            pass
+
     scheduler = BlockingScheduler()
     scheduler.add_job(
         run_job,
@@ -46,7 +92,7 @@ def start_daily_scheduler(dry_run: bool, hour: int, minute: int):
         name="Daily Autonomous Tech Blog Generator"
     )
     
-    logger.info(f"Scheduler started! Configured to run daily at {hour:02d}:{minute:02d} local time (Mode: {'DRY_RUN' if dry_run else 'LIVE'}).")
+    logger.info(f"Scheduler started! Configured to run daily at {hour:02d}:{minute:02d} UTC/Local (Mode: {'DRY_RUN' if dry_run else 'LIVE'}).")
     logger.info("Press Ctrl+C to exit.")
     
     try:

@@ -1,0 +1,51 @@
+[
+  {
+    "keyword": "Flutter AI State Management with Riverpod and Streaming LLMs",
+    "category": "Mobile App Development",
+    "difficulty": "low",
+    "interest_score": 92,
+    "rationale": "High developer search volume for cleanly handling real-time token streaming and UI state in Flutter Riverpod."
+  },
+  {
+    "keyword": "FastAPI vs Node.js for High-Throughput AI Backend Microservices",
+    "category": "Backend Systems",
+    "difficulty": "low",
+    "interest_score": 89,
+    "rationale": "Engineers deciding between Python FastAPI and Node.js/TypeScript for serving LLM APIs and async agentic pipelines."
+  },
+  {
+    "keyword": "Building Production Agentic AI Systems with LangGraph and Python",
+    "category": "AI & Agentic Systems",
+    "difficulty": "medium",
+    "interest_score": 95,
+    "rationale": "Massive demand for building multi-agent cyclic graphs, stateful memory, and human-in-the-loop workflows."
+  },
+  {
+    "keyword": "RAG Vector Search Performance: PostgreSQL pgvector vs Qdrant",
+    "category": "Backend & AI",
+    "difficulty": "medium",
+    "interest_score": 90,
+    "rationale": "High-intent tech search on scaling SQL relational databases with pgvector vs dedicated vector engines for enterprise RAG."
+  },
+  {
+    "keyword": "On-Device SLM Quantization Guide: GGUF, CoreML, and TFLite for Flutter",
+    "category": "Mobile App Development",
+    "difficulty": "low",
+    "interest_score": 87,
+    "rationale": "Step-by-step technical guide for converting 1B-3B parameter models to run natively on iOS and Android devices."
+  },
+  {
+    "keyword": "Mathematical Foundations of Transformer Self-Attention for Engineers",
+    "category": "AI & Machine Learning",
+    "difficulty": "medium",
+    "interest_score": 86,
+    "rationale": "Clear, intuitive breakdown of QKV matrix projections, Softmax scaling, and linear algebra math behind LLMs."
+  },
+  {
+    "keyword": "Building Real-Time Mobile Voice AI Agents with WebRTC and Flutter",
+    "category": "Mobile App Development",
+    "difficulty": "low",
+    "interest_score": 91,
+    "rationale": "Hot developer topic for combining ultra-low-latency WebRTC streaming audio with fast LLM inference in mobile apps."
+  }
+]

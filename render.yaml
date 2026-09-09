@@ -1,0 +1,24 @@
+services:
+  - type: cron
+    name: daily-blog-automation
+    env: python
+    buildCommand: pip install -r requirements.txt
+    schedule: "0 8 * * *" # Runs daily at 08:00 AM UTC
+    startCommand: python main.py --run-now --live
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+      - key: GROQ_FALLBACK_MODEL
+        value: qwen/qwen3.8-27b
+      - key: NOTION_API_KEY
+        sync: false
+      - key: NOTION_DATABASE_ID
+        sync: false
+      - key: DRY_RUN
+        value: "false"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false

@@ -1,0 +1,9 @@
+notion-client>=3.1.0
+feedparser>=6.0.14
+pytrends>=4.9.2
+tenacity>=9.0.0
+apscheduler>=3.11.0
+python-dotenv>=1.0.0
+pytest>=8.0.0
+requests>=2.31.0
+groq>=1.7.0

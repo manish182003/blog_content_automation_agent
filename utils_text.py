@@ -39,7 +39,7 @@ def create_text_block(text: str) -> List[Dict[str, Any]]:
     return [{"type": "text", "text": {"content": chunk}} for chunk in chunks]
 
 def clean_markdown_content(md_content: str) -> str:
-    """Strip HTML comments, metadata blocks, carriage returns, and clean formatting for Notion."""
+    """Strip HTML comments, metadata blocks, carriage returns, broken math brackets, and clean formatting for Notion."""
     # Normalize Windows CRLF line endings to LF
     cleaned = md_content.replace('\r\n', '\n').replace('\r', '\n')
     # Remove HTML comments like <!-- ... -->
@@ -49,6 +49,17 @@ def clean_markdown_content(md_content: str) -> str:
         parts = cleaned.split("---", 2)
         if len(parts) >= 3:
             cleaned = parts[2]
+            
+    # Clean broken isolated math brackets '[' and ']' on standalone lines
+    cleaned = re.sub(r'(?m)^\s*\[\s*$\n?', '', cleaned)
+    cleaned = re.sub(r'(?m)^\s*\]\s*$\n?', '', cleaned)
+    # Clean raw LaTeX macros into clean text math symbols
+    cleaned = re.sub(r'\\text\{([^}]+)\}!?', r'\1', cleaned)
+    cleaned = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'(\1 / \2)', cleaned)
+    cleaned = re.sub(r'\\sqrt\{([^}]+)\}', r'√\1', cleaned)
+    cleaned = re.sub(r'\\left\(', '(', cleaned)
+    cleaned = re.sub(r'\\right\)', ')', cleaned)
+    cleaned = re.sub(r'\^\\top', 'ᵀ', cleaned)
     return cleaned.strip()
 
 def parse_markdown_table_to_notion(table_lines: List[str]) -> Optional[Dict[str, Any]]:

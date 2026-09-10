@@ -17,7 +17,7 @@ Whether you are looking to build a high-performance **Flutter mobile app**, an a
 👉 **[Contact Manish Joshi](https://www.manishjoshi.online/contact)** to discuss your project requirements and start building your breakthrough product today.
 """
 
-STYLE_DIRECTIVE = """
+STYLE_DIRECTIVE = r"""
 Write like a knowledgeable senior engineer explaining technical systems to a developer friend over coffee.
 - Comprehensive technical depth: Target ~1800 to 2500 words across all sections. Provide real implementation details, not high-level summaries.
 - Mostly short-to-medium sentences, under ~20 words.
@@ -43,6 +43,10 @@ CRITICAL LINK & EMAIL RULES (NO HALLUCINATIONS):
 - DO NOT invent, fabricate, or write fake internal links (e.g. DO NOT write "💡 Internal link: ..." or link to non-existent articles).
 - DO NOT invent fake email addresses (e.g. DO NOT write "manish@ai-labs.dev").
 - The ONLY allowed URL in the entire article is the official contact link: https://www.manishjoshi.online/contact.
+
+CRITICAL MATH & EQUATION RULES:
+- DO NOT use isolated floating square brackets '[' or ']' on separate lines for display math formulas.
+- Write equations using clean, human-readable math notation (e.g. `A = softmax(QKᵀ / √d_k)`) or clean inline code. Avoid outputting raw unparsed LaTeX macros like `\text{softmax}!`, `\frac{...}{...}`, `\left(`, `\right)`.
 """
 
 class ContentGenerationAgent(BaseAgent):
@@ -55,8 +59,24 @@ class ContentGenerationAgent(BaseAgent):
     def __init__(self, llm_client=None):
         super().__init__(name="ContentGenerationAgent", llm_client=llm_client)
 
+    def _clean_math_notation(self, content: str) -> str:
+        """Clean up broken LaTeX display math brackets, stray exclamation points, and raw LaTeX macros into clean readable math."""
+        # 1. Remove isolated '[' and ']' lines surrounding formulas
+        content = re.sub(r'(?m)^\s*\[\s*$\n?', '', content)
+        content = re.sub(r'(?m)^\s*\]\s*$\n?', '', content)
+
+        # 2. Clean raw LaTeX math macros into readable text symbols
+        content = re.sub(r'\\text\{([^}]+)\}!?', r'\1', content)
+        content = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'(\1 / \2)', content)
+        content = re.sub(r'\\sqrt\{([^}]+)\}', r'√\1', content)
+        content = re.sub(r'\\left\(', '(', content)
+        content = re.sub(r'\\right\)', ')', content)
+        content = re.sub(r'\^\\top', 'ᵀ', content)
+        return content
+
     def _clean_hallucinated_links(self, content: str, valid_urls: Optional[List[str]] = None) -> str:
         """Strip hallucinated internal link callouts, fake markdown links to non-existent posts, and fake emails while preserving real valid internal links."""
+        content = self._clean_math_notation(content)
         valid_set = set(valid_urls or [])
         valid_set.add("https://www.manishjoshi.online/contact")
 

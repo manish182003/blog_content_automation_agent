@@ -36,6 +36,9 @@ class GroqClientWrapper:
             "temperature": temperature
         }
 
+        if model.startswith("qwen"):
+            payload["max_tokens"] = 900
+
         if json_mode:
             payload["response_format"] = {"type": "json_object"}
 
@@ -44,15 +47,21 @@ class GroqClientWrapper:
         if response.status_code != 200:
             logger.warning(f"Groq API call to {model} returned HTTP {response.status_code}: {response.text}")
             if response.status_code == 429:
-                # Parse wait time from error message if available (e.g. "Please try again in 3.84s")
                 match = re.search(r'try again in ([0-9.]+)\s*s', response.text, re.IGNORECASE)
                 if match:
                     wait_sec = float(match.group(1))
-                    sleep_time = min(max(wait_sec + 1.0, 3.0), 30.0)
-                    logger.info(f"Rate limited on {model}. Parsed retry wait time: {wait_sec}s. Sleeping for {sleep_time}s...")
+                    sleep_time = min(max(wait_sec + 1.0, 3.0), 45.0)
+                    logger.info(f"Rate limited on {model}. Parsed retry wait time: {wait_sec}s. Sleeping for {sleep_time}s before retrying request...")
                     time.sleep(sleep_time)
                 else:
-                    time.sleep(10)
+                    time.sleep(8)
+                
+                # Retry in-flight request once after waiting
+                response = requests.post(self.endpoint, headers=headers, json=payload, timeout=45)
+                if response.status_code == 200:
+                    data = response.json()
+                    return data["choices"][0]["message"]["content"]
+            
             raise LLMClientError(f"HTTP {response.status_code}: {response.text}")
 
         data = response.json()

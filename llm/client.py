@@ -80,7 +80,7 @@ class GroqClientWrapper:
             if m and m not in candidate_models:
                 candidate_models.append(m)
 
-        last_error = None
+        last_error: Optional[LLMClientError] = None
         for model in candidate_models:
             try:
                 return self._make_request(model, messages, temperature=temperature, json_mode=json_mode)
@@ -90,7 +90,9 @@ class GroqClientWrapper:
                 time.sleep(2)
 
         logger.error(f"All candidate models in cascade failed: {last_error}")
-        raise last_error
+        if last_error is not None:
+            raise last_error
+        raise LLMClientError("All candidate models in cascade failed.")
 
     def generate_json(self, prompt: str, system_prompt: Optional[str] = None, temperature: float = 0.3) -> Dict[str, Any]:
         """Convenience method to generate and parse structured JSON responses."""

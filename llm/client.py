@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import time
 from typing import Dict, Any, List, Optional
 import requests
@@ -43,8 +44,15 @@ class GroqClientWrapper:
         if response.status_code != 200:
             logger.warning(f"Groq API call to {model} returned HTTP {response.status_code}: {response.text}")
             if response.status_code == 429:
-                # Sleep briefly to respect Groq rate limits
-                time.sleep(12)
+                # Parse wait time from error message if available (e.g. "Please try again in 3.84s")
+                match = re.search(r'try again in ([0-9.]+)\s*s', response.text, re.IGNORECASE)
+                if match:
+                    wait_sec = float(match.group(1))
+                    sleep_time = min(max(wait_sec + 1.0, 3.0), 30.0)
+                    logger.info(f"Rate limited on {model}. Parsed retry wait time: {wait_sec}s. Sleeping for {sleep_time}s...")
+                    time.sleep(sleep_time)
+                else:
+                    time.sleep(10)
             raise LLMClientError(f"HTTP {response.status_code}: {response.text}")
 
         data = response.json()
@@ -60,23 +68,29 @@ class GroqClientWrapper:
         reraise=True
     )
     def generate(self, prompt: str, system_prompt: Optional[str] = None, temperature: float = 0.7, json_mode: bool = False) -> str:
-        """Execute LLM generation with primary model, retries, and fallback model."""
+        """Execute LLM generation with multi-model fallback cascade."""
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
 
-        # Try primary model first
-        try:
-            return self._make_request(self.primary_model, messages, temperature=temperature, json_mode=json_mode)
-        except LLMClientError as primary_err:
-            logger.warning(f"Primary model ({self.primary_model}) failed: {primary_err}. Trying fallback ({self.fallback_model})...")
-            # Try fallback model
+        # Build candidate model cascade
+        candidate_models = []
+        for m in [self.primary_model, self.fallback_model, "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]:
+            if m and m not in candidate_models:
+                candidate_models.append(m)
+
+        last_error = None
+        for model in candidate_models:
             try:
-                return self._make_request(self.fallback_model, messages, temperature=temperature, json_mode=json_mode)
-            except LLMClientError as fallback_err:
-                logger.error(f"Fallback model ({self.fallback_model}) also failed: {fallback_err}")
-                raise fallback_err
+                return self._make_request(model, messages, temperature=temperature, json_mode=json_mode)
+            except LLMClientError as err:
+                last_error = err
+                logger.warning(f"Model ({model}) failed: {err}. Trying next candidate model in cascade...")
+                time.sleep(2)
+
+        logger.error(f"All candidate models in cascade failed: {last_error}")
+        raise last_error
 
     def generate_json(self, prompt: str, system_prompt: Optional[str] = None, temperature: float = 0.3) -> Dict[str, Any]:
         """Convenience method to generate and parse structured JSON responses."""

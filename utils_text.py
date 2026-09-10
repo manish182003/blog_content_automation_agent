@@ -50,6 +50,20 @@ def clean_markdown_content(md_content: str) -> str:
         if len(parts) >= 3:
             cleaned = parts[2]
             
+    # Strip 'Meta description:' block if it appears before main H1 title
+    if re.search(r'(?i)^\s*meta\s*description\s*:', cleaned):
+        cleaned = re.sub(r'(?is)^\s*meta\s*description\s*:.*?(?=\n#|\Z)', '', cleaned)
+
+    # Strip standalone metadata lines or labels
+    cleaned = re.sub(r'(?im)^\s*(meta\s*description|direct\s*answer|direct\s*answer\s*summary)\s*:.*$\n?', '', cleaned)
+    cleaned = re.sub(r'(?im)^\s*(meta\s*description|direct\s*answer|direct\s*answer\s*summary)\s*:\s*$', '', cleaned)
+
+    # Clean 'Question: ...' or 'Q1: ...' into clean markdown H3 headers
+    cleaned = re.sub(r'(?im)^\s*(?:Question|Q\d*)\s*:\s*', '### ', cleaned)
+
+    # Clean 'Answer: ...' or 'A: ...' or 'Ans: ...' label prefixes
+    cleaned = re.sub(r'(?im)^\s*(?:Answer|Ans\d*|A)\s*:\s*', '', cleaned)
+
     # Clean broken isolated math brackets '[' and ']' on standalone lines
     cleaned = re.sub(r'(?m)^\s*\[\s*$\n?', '', cleaned)
     cleaned = re.sub(r'(?m)^\s*\]\s*$\n?', '', cleaned)

@@ -15,14 +15,9 @@ class NotificationManager:
         self.telegram_token = config.TELEGRAM_BOT_TOKEN
         self.telegram_chat_id = config.TELEGRAM_CHAT_ID
 
-    def ping_google_sitemap(self, sitemap_url: str = "https://www.manishjoshi.online/sitemap.xml"):
-        """Send automatic ping to Google Search Engine to request immediate sitemap crawl."""
-        try:
-            ping_url = f"https://www.google.com/ping?sitemap={sitemap_url}"
-            resp = requests.get(ping_url, timeout=10)
-            logger.info(f"Sent Google sitemap indexing ping ({resp.status_code}): {ping_url}")
-        except Exception as err:
-            logger.warning(f"Google sitemap ping failed: {err}")
+    def notify_sitemap_updated(self, sitemap_url: str = "https://www.manishjoshi.online/sitemap.xml"):
+        """Log sitemap update for search engine indexing via dynamic <lastmod> timestamps."""
+        logger.info(f"Sitemap dynamically updated at {sitemap_url} with fresh <lastmod> timestamps for Google search engine crawling.")
 
     def send_notification(self, title: str, details: Dict[str, Any], status: str) -> None:
         """Compose and send notification across active channels."""
@@ -52,9 +47,9 @@ class NotificationManager:
         formatted_message = "\n".join(message_lines)
         logger.info(f"Notification message generated:\n{formatted_message}")
 
-        # Automatically ping Google Sitemap for instant indexing on LIVE success
+        # Automatically record sitemap update on LIVE success
         if status == "SUCCESS" and details.get("mode") == "LIVE":
-            self.ping_google_sitemap()
+            self.notify_sitemap_updated()
 
         # Send Telegram notification if token is configured
         if self.telegram_token:

@@ -44,6 +44,10 @@ CRITICAL LINK & EMAIL RULES (NO HALLUCINATIONS):
 - DO NOT invent fake email addresses (e.g. DO NOT write "manish@ai-labs.dev").
 - The ONLY allowed URL in the entire article is the official contact link: https://www.manishjoshi.online/contact.
 
+CRITICAL CONTENT & LABELING RULES (STRICT PROHIBITIONS):
+- DO NOT write metadata labels like "Meta description:", "Meta Description:", "Direct answer:", "Direct Answer:", "Summary:", "Overview:" anywhere in the article text. Start directly with the H1 Title and natural introduction.
+- DO NOT use "Question:", "Answer:", "Q1:", "A:", "Q:", "Ans:" labels anywhere in the body or FAQ. For FAQs, write clear, natural Markdown H3 headings (e.g. `### Does Riverpod's autoDispose add runtime overhead?`) followed directly by plain natural paragraphs.
+
 CRITICAL MATH & EQUATION RULES:
 - DO NOT use isolated floating square brackets '[' or ']' on separate lines for display math formulas.
 - Write equations using clean, human-readable math notation (e.g. `A = softmax(QKᵀ / √d_k)`) or clean inline code. Avoid outputting raw unparsed LaTeX macros like `\text{softmax}!`, `\frac{...}{...}`, `\left(`, `\right)`.
@@ -58,6 +62,24 @@ class ContentGenerationAgent(BaseAgent):
 
     def __init__(self, llm_client=None):
         super().__init__(name="ContentGenerationAgent", llm_client=llm_client)
+
+    def _clean_unwanted_content_labels(self, content: str) -> str:
+        """Strip unwanted metadata labels ('Meta description:', 'Direct answer:', 'Question:', 'Answer:') from body."""
+        # 1. Strip 'Meta description:' block if it appears before main H1 title
+        if re.search(r'(?i)^\s*meta\s*description\s*:', content):
+            content = re.sub(r'(?is)^\s*meta\s*description\s*:.*?(?=\n#|\Z)', '', content)
+
+        # 2. Strip standalone metadata lines or labels
+        content = re.sub(r'(?im)^\s*(meta\s*description|direct\s*answer|direct\s*answer\s*summary)\s*:.*$\n?', '', content)
+        content = re.sub(r'(?im)^\s*(meta\s*description|direct\s*answer|direct\s*answer\s*summary)\s*:\s*$', '', content)
+
+        # 3. Clean 'Question: ...' or 'Q1: ...' into clean markdown H3 headers
+        content = re.sub(r'(?im)^\s*(?:Question|Q\d*)\s*:\s*', '### ', content)
+
+        # 4. Clean 'Answer: ...' or 'A: ...' or 'Ans: ...' label prefixes
+        content = re.sub(r'(?im)^\s*(?:Answer|Ans\d*|A)\s*:\s*', '', content)
+
+        return content
 
     def _clean_math_notation(self, content: str) -> str:
         """Clean up broken LaTeX display math brackets, stray exclamation points, and raw LaTeX macros into clean readable math."""
@@ -128,7 +150,7 @@ class ContentGenerationAgent(BaseAgent):
             logger.info(f"Incorporating rewrite audit feedback into Content Agent prompt:\n{feedback}")
             feedback_prompt = f"\nCRITICAL REWRITE AUDIT FEEDBACK (Must address all itemized points below):\n{feedback}\n"
 
-        # PASS 1: Part A (Title, Direct Answer, Problem Statement, System Architecture, & Metric Table)
+        # PASS 1: Part A (Title, Natural Intro Overview, Problem Statement, System Architecture, & Metric Table)
         prompt_part_a = (
             f"Write PART 1 of an in-depth technical guide (approx 700-900 words) in Markdown format for the topic below.\n\n"
             f"Topic: {topic}\n"
@@ -138,7 +160,7 @@ class ContentGenerationAgent(BaseAgent):
             f"Supporting Context:\n" + "\n".join(f"- {fact}" for fact in supporting_facts) + "\n\n"
             f"Include the following sections in PART 1:\n"
             f"1. Main H1 Title: Ensure exact keyword '{keyword}' appears in the title.\n"
-            f"2. Direct-Answer Summary: 1-2 sentences right after H1 directly answering the query for GEO AI-search.\n"
+            f"2. Introductory Overview: 1-2 crisp, natural sentences right after H1 directly explaining the technical solution (DO NOT use labels like 'Direct answer:' or 'Meta description:').\n"
             f"3. Introduction & Real-World Engineering Context (~200 words, keyword in first 100 words).\n"
             f"4. H2: Problem Statement & System Architecture: Detailed breakdown of the technical problem.\n"
             f"5. Include a structured Markdown Table comparing architecture patterns or performance metrics.\n"
@@ -169,25 +191,26 @@ class ContentGenerationAgent(BaseAgent):
         part_b = self.llm.generate(prompt=prompt_part_b, system_prompt=STYLE_DIRECTIVE, temperature=0.7)
         part_b = self._ensure_complete_code_blocks(part_b)
 
-        # PASS 3: Part C (Production Pitfalls, GEO FAQ, Conclusion & Client Conversion CTA)
+        # PASS 3: Part C (Production Pitfalls, Natural FAQ, Conclusion & Client Conversion CTA)
         prompt_part_c = (
             f"Write PART 3 of the technical guide (approx 600-800 words) concluding the article.\n\n"
             f"Topic: {topic}\n"
             f"Target Keyword: {keyword}\n"
             f"Include the following sections in PART 3:\n"
             f"1. H2: Production Pitfalls & Performance Optimization (edge cases, memory leaks, concurrency, rate limits).\n"
-            f"2. H2: Frequently Asked Questions (GEO AI-Search Q&A with 3 crisp Q&A subheadings).\n"
+            f"2. H2: Frequently Asked Questions (3 natural H3 subheadings with clear paragraph answers. DO NOT use 'Question:' or 'Answer:' labels).\n"
             f"3. H2: Final Summary & Key Takeaways.\n"
             f"4. Mandatory Client Conversion CTA: Highlighting Manish Joshi's expertise in Flutter, AI, Agentic Workflows, and FastAPI/Node.js backend engineering.\n"
             f"Output ONLY clean Markdown for PART 3."
         )
 
-        logger.info("Generating Part 3 (Production Pitfalls, GEO FAQ, CTA)...")
+        logger.info("Generating Part 3 (Production Pitfalls, FAQ, CTA)...")
         part_c = self.llm.generate(prompt=prompt_part_c, system_prompt=STYLE_DIRECTIVE, temperature=0.7)
         part_c = self._ensure_complete_code_blocks(part_c)
 
         # Stitch Parts together seamlessly
         full_draft = f"{part_a.strip()}\n\n{part_b.strip()}\n\n{part_c.strip()}"
+        full_draft = self._clean_unwanted_content_labels(full_draft)
         full_draft = self._ensure_complete_code_blocks(full_draft)
         full_draft = self._clean_hallucinated_links(full_draft)
         full_draft = self._ensure_cta_included(full_draft)

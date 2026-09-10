@@ -22,7 +22,7 @@ services:
       - key: TELEGRAM_CHAT_ID
         sync: false
       - key: RUN_HOUR
-        value: "8"
+        value: "17"
       - key: RUN_MINUTE
         value: "0"
       - key: TIMEZONE

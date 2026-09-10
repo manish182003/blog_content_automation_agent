@@ -16,7 +16,7 @@ NOTION_API_KEY = os.getenv("NOTION_API_KEY", "")
 NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID", "")
 
 # Scheduler config
-RUN_HOUR = int(os.getenv("RUN_HOUR", "8"))
+RUN_HOUR = int(os.getenv("RUN_HOUR", "17"))
 RUN_MINUTE = int(os.getenv("RUN_MINUTE", "0"))
 TIMEZONE = os.getenv("TIMEZONE", "Asia/Kolkata")
 

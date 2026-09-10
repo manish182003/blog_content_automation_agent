@@ -1,3 +1,4 @@
+from typing import List
 import logging
 import re
 from typing import Dict, Any, Optional
@@ -54,20 +55,25 @@ class ContentGenerationAgent(BaseAgent):
     def __init__(self, llm_client=None):
         super().__init__(name="ContentGenerationAgent", llm_client=llm_client)
 
-    def _clean_hallucinated_links(self, content: str) -> str:
-        """Strip hallucinated internal link callouts, fake markdown links to non-existent posts, and fake emails."""
-        # 1. Remove "💡 Internal link: ..." or "Internal link: ..." lines
-        content = re.sub(r'(?i)[💡\s]*Internal link:.*?\n', '', content)
-        
+    def _clean_hallucinated_links(self, content: str, valid_urls: Optional[List[str]] = None) -> str:
+        """Strip hallucinated internal link callouts, fake markdown links to non-existent posts, and fake emails while preserving real valid internal links."""
+        valid_set = set(valid_urls or [])
+        valid_set.add("https://www.manishjoshi.online/contact")
+
+        # 1. Remove "💡 Internal link: ..." or "Internal link: ..." lines if they point to non-existent URLs
         # 2. Replace fake email addresses (e.g. manish@ai-labs.dev) with official contact link
         content = re.sub(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', 'https://www.manishjoshi.online/contact', content)
         
-        # 3. Clean any internal markdown links [Post Title](...) EXCEPT https://www.manishjoshi.online/contact
+        # 3. Clean any markdown links [Post Title](...) EXCEPT those matching valid_set
         def replace_link(match):
             text = match.group(1)
-            url = match.group(2)
-            if "manishjoshi.online/contact" in url:
+            url = match.group(2).strip()
+            
+            # Allow valid internal URLs or official contact link
+            if url in valid_set or any(v in url for v in valid_set):
                 return match.group(0)
+            
+            # If link is fake/hallucinated, convert to plain bold text
             return f"**{text}**"
 
         content = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', replace_link, content)

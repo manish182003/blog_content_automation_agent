@@ -86,6 +86,15 @@ class PastBlogSummarizerAgent(BaseAgent):
         covered_topics = list(set([p["title"] for p in past_posts] + local_history))
         used_keywords = [p["slug"].replace("-", " ") for p in past_posts if p.get("slug")]
 
+        # Build list of real internal links for authentic interlinking
+        real_internal_links = [
+            {
+                "title": p["title"],
+                "url": f"https://www.manishjoshi.online/blog/{p['slug']}"
+            }
+            for p in past_posts if p.get("slug")
+        ]
+
         summary = {
             "post_count": len(past_posts),
             "covered_topics": covered_topics,
@@ -93,9 +102,10 @@ class PastBlogSummarizerAgent(BaseAgent):
             "voice_notes": "Conversational, practical, coffee-chat style with natural CTA for AI and Flutter app development work."
         }
 
-        logger.info(f"Agent 3 retrieved {len(covered_topics)} past topics across Notion and local history.")
+        logger.info(f"Agent 3 retrieved {len(covered_topics)} past topics and {len(real_internal_links)} real internal links.")
         return {
             "past_blog_summary": summary,
             "used_keywords": used_keywords,
-            "covered_topics": covered_topics
+            "covered_topics": covered_topics,
+            "real_internal_links": real_internal_links
         }

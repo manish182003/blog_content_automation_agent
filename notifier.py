@@ -15,6 +15,15 @@ class NotificationManager:
         self.telegram_token = config.TELEGRAM_BOT_TOKEN
         self.telegram_chat_id = config.TELEGRAM_CHAT_ID
 
+    def ping_google_sitemap(self, sitemap_url: str = "https://www.manishjoshi.online/sitemap.xml"):
+        """Send automatic ping to Google Search Engine to request immediate sitemap crawl."""
+        try:
+            ping_url = f"https://www.google.com/ping?sitemap={sitemap_url}"
+            resp = requests.get(ping_url, timeout=10)
+            logger.info(f"Sent Google sitemap indexing ping ({resp.status_code}): {ping_url}")
+        except Exception as err:
+            logger.warning(f"Google sitemap ping failed: {err}")
+
     def send_notification(self, title: str, details: Dict[str, Any], status: str) -> None:
         """Compose and send notification across active channels."""
         emoji = "✅" if status == "SUCCESS" else ("⚠️" if status == "NEEDS_REVIEW" else "❌")
@@ -47,16 +56,6 @@ class NotificationManager:
         if status == "SUCCESS" and details.get("mode") == "LIVE":
             self.ping_google_sitemap()
 
-    def ping_google_sitemap(self):
-        """Send automatic ping to Google Search Engine to request immediate sitemap crawl."""
-        try:
-            sitemap_url = "https://www.manishjoshi.online/sitemap.xml"
-            ping_url = f"https://www.google.com/ping?sitemap={sitemap_url}"
-            resp = requests.get(ping_url, timeout=10)
-            logger.info(f"Sent Google sitemap indexing ping ({resp.status_code}): {ping_url}")
-        except Exception as err:
-            logger.warning(f"Google sitemap ping failed: {err}")
-
         # Send Telegram notification if token is configured
         if self.telegram_token:
             chat_id = self.telegram_chat_id
@@ -65,7 +64,6 @@ class NotificationManager:
                     res = requests.get(f"https://api.telegram.org/bot{self.telegram_token}/getUpdates", timeout=5).json()
                     results = res.get("result", [])
                     if results:
-                        # Grab latest chat id
                         chat_id = results[-1].get("message", {}).get("chat", {}).get("id")
                         logger.info(f"Auto-detected Telegram Chat ID: {chat_id}")
                 except Exception as err:
@@ -74,27 +72,41 @@ class NotificationManager:
             if chat_id:
                 try:
                     tg_url = f"https://api.telegram.org/bot{self.telegram_token}/sendMessage"
+                    # Try sending formatted Markdown first
                     resp = requests.post(tg_url, json={
                         "chat_id": chat_id,
                         "text": formatted_message,
                         "parse_mode": "Markdown"
                     }, timeout=10)
+                    
                     if resp.status_code == 200:
                         logger.info("Telegram notification sent successfully!")
                     else:
-                        logger.warning(f"Telegram API returned HTTP {resp.status_code}: {resp.text}")
+                        # Fallback: Send plain text if Markdown entity parsing failed
+                        logger.warning(f"Telegram Markdown parse failed ({resp.status_code}). Retrying with plain text...")
+                        plain_text = formatted_message.replace("**", "").replace("_", "")
+                        resp_fallback = requests.post(tg_url, json={
+                            "chat_id": chat_id,
+                            "text": plain_text
+                        }, timeout=10)
+                        if resp_fallback.status_code == 200:
+                            logger.info("Telegram notification sent successfully (plain text fallback)!")
+                        else:
+                            logger.warning(f"Telegram API fallback error ({resp_fallback.status_code}): {resp_fallback.text}")
                 except Exception as e:
                     logger.warning(f"Failed to send Telegram notification: {e}")
             else:
-                logger.warning("Telegram Bot Token is present, but Chat ID was empty and could not be auto-detected. (Send a message to your Telegram bot first!).")
+                logger.warning("Telegram Bot Token is present, but Chat ID was empty and could not be auto-detected.")
 
         # Send HTTP Webhook if configured
         if self.webhook_url:
             try:
+                # Sanitize details dict for json payload
+                clean_details = {k: str(v) if not isinstance(v, (int, float, bool, str, type(None))) else v for k, v in details.items()}
                 requests.post(self.webhook_url, json={
                     "event": "blog_automation_run",
                     "status": status,
-                    "details": details
+                    "details": clean_details
                 }, timeout=10)
                 logger.info("Webhook notification sent successfully.")
             except Exception as e:

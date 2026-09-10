@@ -25,3 +25,5 @@ services:
         value: "8"
       - key: RUN_MINUTE
         value: "0"
+      - key: TIMEZONE
+        value: "Asia/Kolkata"

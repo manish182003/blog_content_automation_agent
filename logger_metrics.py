@@ -37,6 +37,7 @@ class MetricsLogger:
                     duration_seconds REAL DEFAULT 0.0,
                     agent_logs TEXT,
                     notion_page_id TEXT,
+                    error_message TEXT
                 )
             """)
             cursor.execute("DELETE FROM runs WHERE date(timestamp) < date('now', '-30 days')")

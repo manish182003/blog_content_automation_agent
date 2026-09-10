@@ -81,7 +81,7 @@ def start_daily_scheduler(dry_run: bool, hour: int, minute: int):
         except ValueError:
             pass
 
-    scheduler = BlockingScheduler()
+    scheduler = BlockingScheduler(timezone=config.TIMEZONE)
     scheduler.add_job(
         run_job,
         trigger="cron",
@@ -92,7 +92,7 @@ def start_daily_scheduler(dry_run: bool, hour: int, minute: int):
         name="Daily Autonomous Tech Blog Generator"
     )
     
-    logger.info(f"Scheduler started! Configured to run daily at {hour:02d}:{minute:02d} UTC/Local (Mode: {'DRY_RUN' if dry_run else 'LIVE'}).")
+    logger.info(f"Scheduler started! Configured to run daily at {hour:02d}:{minute:02d} ({config.TIMEZONE}) | Mode: {'DRY_RUN' if dry_run else 'LIVE'}.")
     logger.info("Press Ctrl+C to exit.")
     
     try:

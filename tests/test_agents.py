@@ -85,7 +85,7 @@ def test_topic_selection_agent(mock_llm):
         "covered_topics": []
     })
     assert res["chosen_topic"] == "Building Flutter AI Apps"
-    assert res["category"] in ["AI", "Mobile App Development"]
+    assert res["category"] in ["AI", "Mobile App Development", "Backend Systems", "AI Mathematics & CS Foundations", "AI & Agentic Systems"]
 
 def test_content_generation_agent(mock_llm):
     agent = ContentGenerationAgent(llm_client=mock_llm)

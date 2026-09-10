@@ -24,38 +24,62 @@ class TopicSelectionAgent(BaseAgent):
         past_summary = context.get("past_blog_summary", {})
         covered_topics = context.get("covered_topics", [])
 
-        # Determine last category to enforce rotation across AI, Mobile, and Backend
-        last_category = "AI"
+        # Determine last categories & banned subjects from covered topics
+        recent_text = " ".join(covered_topics).lower()
+        
+        banned_concepts = []
+        if "device" in recent_text or "quantization" in recent_text or "small language" in recent_text:
+            banned_concepts.append("On-Device LLMs / Small Language Model Quantization")
+        if "flutter" in recent_text:
+            banned_concepts.append("Basic Flutter Setup")
+
+        # Rotate strictly across 4 distinct domains
+        last_category = "Mobile App Development"
         if covered_topics and len(covered_topics) > 0:
             last_title = covered_topics[-1].lower()
-            if "flutter" in last_title or "app" in last_title or "mobile" in last_title:
+            if "flutter" in last_title or "mobile" in last_title:
                 last_category = "Mobile App Development"
-            elif "fastapi" in last_title or "node" in last_title or "backend" in last_title or "sql" in last_title:
+            elif "fastapi" in last_title or "node" in last_title or "backend" in last_title or "sql" in last_title or "redis" in last_title:
                 last_category = "Backend Systems"
+            elif "math" in last_title or "linear algebra" in last_title or "attention" in last_title or "gradient" in last_title:
+                last_category = "AI Mathematics & CS Foundations"
+            else:
+                last_category = "AI & Agentic Systems"
 
         if last_category == "Mobile App Development":
-            target_category = "AI & Agentic Systems"
-        elif last_category == "AI":
             target_category = "Backend Systems"
+        elif last_category == "Backend Systems":
+            target_category = "AI Mathematics & CS Foundations"
+        elif last_category == "AI Mathematics & CS Foundations":
+            target_category = "AI & Agentic Systems"
         else:
             target_category = "Mobile App Development"
 
+        banned_str = "\n".join(f"- STRICTLY BANNED TODAY: {concept}" for concept in banned_concepts) if banned_concepts else "None"
+
         prompt = (
-            f"You are a senior technical editorial strategist for a high-traffic tech engineering blog.\n\n"
+            f"You are a senior technical editorial strategist for a high-traffic engineering blog.\n\n"
             f"STRICT DIVERSITY REQUIREMENT: Select a COMPLETELY NEW, UNIQUE tech topic.\n"
             f"Do NOT repeat or closely match any of these previously covered topics:\n"
             f"{json.dumps(covered_topics, indent=2)}\n\n"
-            f"Target Category Preference for Rotation: '{target_category}' (must be one of 'AI & Agentic Systems', 'Mobile App Development', or 'Backend Systems').\n\n"
+            f"{banned_str}\n\n"
+            f"Target Category Preference for Rotation Today: '{target_category}'\n"
+            f"Allowed Categories: 'Backend Systems', 'AI Mathematics & CS Foundations', 'AI & Agentic Systems', 'Mobile App Development'.\n\n"
             f"Keyword Candidates:\n{json.dumps(keyword_candidates, indent=2)}\n\n"
             f"Recent Tech News Items:\n{json.dumps(news_items[:10], indent=2)}\n\n"
-            f"Topic Ideas by Category to inspire high-traffic variety:\n"
-            f"- Mobile App Development: Flutter State Management for Streaming LLMs (Riverpod/Bloc), Native C++/Swift Bridges for Flutter AI, Optimizing Mobile App FPS with Real-Time Inference.\n"
-            f"- AI & Agentic Systems: Building Multi-Agent Autonomous Workflows with LangGraph & Python, Mathematical Foundations of Transformer Self-Attention, Small Language Model Quantization (GGUF vs CoreML vs TFLite).\n"
-            f"- Backend Systems: FastAPI vs Node.js for High-Throughput AI Microservices, RAG Vector Search: PostgreSQL pgvector vs Dedicated Vector Databases.\n\n"
+            f"Broad Topic Ideas Matrix across 8 engineering domains to ensure maximum variety:\n"
+            f"1. Backend Systems: FastAPI vs Node.js for High-Throughput Async Microservices, Redis BullMQ Task Queues, PostgreSQL Query & Indexing Optimization.\n"
+            f"2. Agentic AI: Building Stateful Multi-Agent Workflows with LangGraph, Tool Calling & Human-in-the-Loop Safeguards.\n"
+            f"3. AI Mathematics: The Linear Algebra of Transformer Self-Attention (QKV Projections), Gradient Descent Optimization Math.\n"
+            f"4. Machine Learning & Deep Learning: Model Distillation (Teacher to Student), Hyperparameter Tuning with Optuna, Vision Transformers vs CNNs.\n"
+            f"5. Mobile Engineering: Flutter State Management (Riverpod vs Bloc), Optimizing Mobile App FPS & Rendering Bottlenecks, Offline SQLite Sync.\n"
+            f"6. Vector Search: PostgreSQL pgvector vs Qdrant vs Chroma for Enterprise RAG Systems.\n"
+            f"7. Reinforcement Learning: RLHF (PPO Fine-Tuning) and Deep Q-Learning decision systems.\n"
+            f"8. Infrastructure & Cloud: Cloud Run Docker Deployments, Serverless Async Workers.\n\n"
             f"Return a JSON object with fields:\n"
             f"- 'chosen_topic': string (compelling, unique, highly technical article title)\n"
             f"- 'target_keyword': string (primary high-intent SEO keyword)\n"
-            f"- 'category': string (one of 'AI & Agentic Systems', 'Mobile App Development', or 'Backend Systems')\n"
+            f"- 'category': string (one of the 4 allowed categories)\n"
             f"- 'angle': string (unique perspective or technical angle)\n"
             f"- 'selection_rationale': string (why this topic is unique and diverse compared to past posts)\n"
             f"- 'supporting_facts': array of strings (3 to 5 concrete facts or news links from the recent news context)\n"
@@ -65,7 +89,7 @@ class TopicSelectionAgent(BaseAgent):
         
         # Ensure category fallback guardrail
         cat = res.get("category", target_category)
-        if cat not in ["AI & Agentic Systems", "AI", "Mobile App Development", "Backend Systems"]:
+        if cat not in ["Backend Systems", "AI Mathematics & CS Foundations", "AI & Agentic Systems", "Mobile App Development"]:
             cat = target_category
 
         logger.info(f"Agent 4 selected topic: '{res.get('chosen_topic')}' [Category: {cat}]")

@@ -1,51 +1,86 @@
 [
   {
-    "keyword": "Flutter AI State Management with Riverpod and Streaming LLMs",
-    "category": "Mobile App Development",
+    "keyword": "FastAPI vs Node.js for High-Throughput Async Microservices",
+    "category": "Backend & Scalable Systems",
     "difficulty": "low",
     "interest_score": 92,
-    "rationale": "High developer search volume for cleanly handling real-time token streaming and UI state in Flutter Riverpod."
+    "rationale": "High developer search volume comparing Python FastAPI and Node.js for scalable backend services."
   },
   {
-    "keyword": "FastAPI vs Node.js for High-Throughput AI Backend Microservices",
-    "category": "Backend Systems",
+    "keyword": "Building Stateful Autonomous Multi-Agent Workflows with LangGraph",
+    "category": "Agentic AI & Multi-Agent Systems",
+    "difficulty": "medium",
+    "interest_score": 96,
+    "rationale": "Massive demand for multi-agent cyclic graphs, memory persistence, and tool routing."
+  },
+  {
+    "keyword": "Flutter State Management Deep Dive: Riverpod vs Bloc for Enterprise Apps",
+    "category": "Mobile Frontend & Architecture",
     "difficulty": "low",
+    "interest_score": 94,
+    "rationale": "Core Flutter architectural comparison widely searched by cross-platform engineers."
+  },
+  {
+    "keyword": "The Linear Algebra of Self-Attention: QKV Projections Explained Mathematically",
+    "category": "AI Mathematics & CS Foundations",
+    "difficulty": "medium",
     "interest_score": 89,
-    "rationale": "Engineers deciding between Python FastAPI and Node.js/TypeScript for serving LLM APIs and async agentic pipelines."
+    "rationale": "Engineers seeking rigorous mathematical understanding of transformer attention mechanisms."
   },
   {
-    "keyword": "Building Production Agentic AI Systems with LangGraph and Python",
-    "category": "AI & Agentic Systems",
+    "keyword": "PostgreSQL pgvector vs Dedicated Vector Databases for RAG Systems",
+    "category": "Backend & Vector Databases",
     "difficulty": "medium",
-    "interest_score": 95,
-    "rationale": "Massive demand for building multi-agent cyclic graphs, stateful memory, and human-in-the-loop workflows."
+    "interest_score": 91,
+    "rationale": "Tech lead decision making between pgvector and Qdrant/Chroma for production vector search."
   },
   {
-    "keyword": "RAG Vector Search Performance: PostgreSQL pgvector vs Qdrant",
-    "category": "Backend & AI",
-    "difficulty": "medium",
-    "interest_score": 90,
-    "rationale": "High-intent tech search on scaling SQL relational databases with pgvector vs dedicated vector engines for enterprise RAG."
-  },
-  {
-    "keyword": "On-Device SLM Quantization Guide: GGUF, CoreML, and TFLite for Flutter",
-    "category": "Mobile App Development",
+    "keyword": "Building Distributed Task Queues with Redis, BullMQ, and Python Celery",
+    "category": "Backend & Scalable Systems",
     "difficulty": "low",
-    "interest_score": 87,
-    "rationale": "Step-by-step technical guide for converting 1B-3B parameter models to run natively on iOS and Android devices."
+    "interest_score": 88,
+    "rationale": "Practical guide for handling async background processing in production web services."
   },
   {
-    "keyword": "Mathematical Foundations of Transformer Self-Attention for Engineers",
-    "category": "AI & Machine Learning",
+    "keyword": "Hyperparameter Optimization with Optuna for Deep Learning Models",
+    "category": "Machine Learning & Deep Learning",
     "difficulty": "medium",
     "interest_score": 86,
-    "rationale": "Clear, intuitive breakdown of QKV matrix projections, Softmax scaling, and linear algebra math behind LLMs."
+    "rationale": "Automated tuning techniques for PyTorch and TensorFlow model training pipelines."
   },
   {
-    "keyword": "Building Real-Time Mobile Voice AI Agents with WebRTC and Flutter",
-    "category": "Mobile App Development",
+    "keyword": "Reinforcement Learning from Human Feedback (RLHF) Explained Step-by-Step",
+    "category": "Reinforcement Learning",
+    "difficulty": "high",
+    "interest_score": 90,
+    "rationale": "Breakdown of reward modeling, PPO fine-tuning, and alignment in modern AI models."
+  },
+  {
+    "keyword": "Optimizing Flutter Mobile App FPS and Rendering Engine Bottlenecks",
+    "category": "Mobile Frontend & Architecture",
     "difficulty": "low",
-    "interest_score": 91,
-    "rationale": "Hot developer topic for combining ultra-low-latency WebRTC streaming audio with fast LLM inference in mobile apps."
+    "interest_score": 93,
+    "rationale": "Performance tuning guide for reducing dropped frames and memory usage in Flutter apps."
+  },
+  {
+    "keyword": "Building Offline-First Mobile Apps with SQLite and Isar Database",
+    "category": "Mobile Frontend & Architecture",
+    "difficulty": "low",
+    "interest_score": 87,
+    "rationale": "Architecture for seamless offline data synchronization in mobile applications."
+  },
+  {
+    "keyword": "Model Distillation: Training Lightweight Student Models from Large Teachers",
+    "category": "Machine Learning & Deep Learning",
+    "difficulty": "medium",
+    "interest_score": 89,
+    "rationale": "Techniques for compressing deep neural networks while retaining predictive accuracy."
+  },
+  {
+    "keyword": "Gradient Descent & Optimization Mathematics for Machine Learning Engineers",
+    "category": "AI Mathematics & CS Foundations",
+    "difficulty": "medium",
+    "interest_score": 88,
+    "rationale": "Mathematical intuitive guide covering SGD, Adam, and loss surface geometry."
   }
 ]

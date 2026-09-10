@@ -37,6 +37,11 @@ CRITICAL CODE BLOCK & FORMATTING RULES:
 - DO NOT include HTML comments (`<!-- ... -->`).
 - DO NOT include metadata header blocks (`Title:`, `Metadata:`, `SEO Passed:`). Output ONLY clean Markdown content.
 - DO NOT cut off code snippets or paragraphs mid-sentence.
+
+CRITICAL LINK & EMAIL RULES (NO HALLUCINATIONS):
+- DO NOT invent, fabricate, or write fake internal links (e.g. DO NOT write "💡 Internal link: ..." or link to non-existent articles).
+- DO NOT invent fake email addresses (e.g. DO NOT write "manish@ai-labs.dev").
+- The ONLY allowed URL in the entire article is the official contact link: https://www.manishjoshi.online/contact.
 """
 
 class ContentGenerationAgent(BaseAgent):
@@ -48,6 +53,25 @@ class ContentGenerationAgent(BaseAgent):
 
     def __init__(self, llm_client=None):
         super().__init__(name="ContentGenerationAgent", llm_client=llm_client)
+
+    def _clean_hallucinated_links(self, content: str) -> str:
+        """Strip hallucinated internal link callouts, fake markdown links to non-existent posts, and fake emails."""
+        # 1. Remove "💡 Internal link: ..." or "Internal link: ..." lines
+        content = re.sub(r'(?i)[💡\s]*Internal link:.*?\n', '', content)
+        
+        # 2. Replace fake email addresses (e.g. manish@ai-labs.dev) with official contact link
+        content = re.sub(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', 'https://www.manishjoshi.online/contact', content)
+        
+        # 3. Clean any internal markdown links [Post Title](...) EXCEPT https://www.manishjoshi.online/contact
+        def replace_link(match):
+            text = match.group(1)
+            url = match.group(2)
+            if "manishjoshi.online/contact" in url:
+                return match.group(0)
+            return f"**{text}**"
+
+        content = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', replace_link, content)
+        return content
 
     def _ensure_complete_code_blocks(self, content: str) -> str:
         """Fix any unclosed code blocks by appending missing closing backticks."""
@@ -139,6 +163,7 @@ class ContentGenerationAgent(BaseAgent):
         # Stitch Parts together seamlessly
         full_draft = f"{part_a.strip()}\n\n{part_b.strip()}\n\n{part_c.strip()}"
         full_draft = self._ensure_complete_code_blocks(full_draft)
+        full_draft = self._clean_hallucinated_links(full_draft)
         full_draft = self._ensure_cta_included(full_draft)
 
         word_count = len(full_draft.split())
